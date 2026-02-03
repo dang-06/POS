@@ -64,7 +64,7 @@
 
                             <dt class="col-sm-5">{{ __('Total Amount') }}</dt>
                             <dd class="col-sm-7">
-                                <strong class="text-lg">{{ config('settings.currency_symbol') }}{{ number_format($purchase->total_amount, 2) }}</strong>
+                                <strong class="text-lg">{{ config('settings.currency_symbol') }}{{ number_format($purchase->total_amount) }}</strong>
                             </dd>
 
                             <dt class="col-sm-5">{{ __('Created By') }}</dt>
@@ -172,10 +172,10 @@
                                             <span class="badge badge-info badge-lg">{{ $item->quantity }}</span>
                                         </td>
                                         <td class="text-right">
-                                            {{ config('settings.currency_symbol') }}{{ number_format($item->purchase_price, 2) }}
+                                            {{ config('settings.currency_symbol') }}{{ number_format($item->purchase_price) }}
                                         </td>
                                         <td class="text-right">
-                                            <strong>{{ config('settings.currency_symbol') }}{{ number_format($item->subtotal, 2) }}</strong>
+                                            <strong>{{ config('settings.currency_symbol') }}{{ number_format($item->subtotal) }}</strong>
                                         </td>
                                     </tr>
                                 @empty
@@ -194,7 +194,7 @@
                                         </td>
                                         <td class="text-right">
                                             <strong class="text-lg text-success">
-                                                {{ config('settings.currency_symbol') }}{{ number_format($purchase->total_amount, 2) }}
+                                                {{ config('settings.currency_symbol') }}{{ number_format($purchase->total_amount) }}
                                             </strong>
                                         </td>
                                     </tr>

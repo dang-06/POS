@@ -14,7 +14,7 @@
         <table class="table">
             <thead>
                 <tr>
-                    <th>{{ __('product.ID') }}</th>
+                    <th>{{ __('product.ID') }}</th> 
                     <th>{{ __('product.Name') }}</th>
                     <th>{{ __('product.Image') }}</th>
                     <th>{{ __('product.Barcode') }}</th>

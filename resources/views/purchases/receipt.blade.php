@@ -231,7 +231,7 @@
                     <small style="font-size: 9px;">{{ $item->product->barcode }}</small>
                 </td>
                 <td class="item-qty">{{ $item->quantity }}</td>
-                <td class="item-price">{{ config('settings.currency_symbol') }}{{ number_format($item->subtotal, 2) }}</td>
+                <td class="item-price">{{ config('settings.currency_symbol') }}{{ number_format($item->subtotal) }}</td>
             </tr>
         @endforeach
         </tbody>
@@ -242,11 +242,11 @@
 <div class="total-section">
     <div class="total-row">
         <span>Subtotal:</span>
-        <span>{{ config('settings.currency_symbol') }}{{ number_format($purchase->total_amount, 2) }}</span>
+        <span>{{ config('settings.currency_symbol') }}{{ number_format($purchase->total_amount) }}</span>
     </div>
     <div class="total-row grand-total">
         <span>TOTAL:</span>
-        <span>{{ config('settings.currency_symbol') }}{{ number_format($purchase->total_amount, 2) }}</span>
+        <span>{{ config('settings.currency_symbol') }}{{ number_format($purchase->total_amount) }}</span>
     </div>
     <div class="info-row" style="margin-top: 10px;">
         <span class="info-label">Total Items:</span>

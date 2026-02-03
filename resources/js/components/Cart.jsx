@@ -15,14 +15,15 @@ class Cart extends Component {
             search: "",
             customer_id: "",
             translations: {},
+            loading: false,
         };
 
+        // Bindings...
         this.loadCart = this.loadCart.bind(this);
         this.handleOnChangeBarcode = this.handleOnChangeBarcode.bind(this);
         this.handleScanBarcode = this.handleScanBarcode.bind(this);
         this.handleChangeQty = this.handleChangeQty.bind(this);
         this.handleEmptyCart = this.handleEmptyCart.bind(this);
-
         this.loadProducts = this.loadProducts.bind(this);
         this.handleChangeSearch = this.handleChangeSearch.bind(this);
         this.handleSeach = this.handleSeach.bind(this);
@@ -32,135 +33,109 @@ class Cart extends Component {
     }
 
     componentDidMount() {
-        // load user cart
         this.loadTranslations();
         this.loadCustomers();
         this.loadProducts();
         this.loadCart();
     }
 
-    // load the transaltions for the react component
+    // ─── API CALLS ────────────────────────────────────────
     loadTranslations() {
-        axios
-            .get("/admin/locale/cart")
-            .then((res) => {
-                const translations = res.data;
-                this.setState({ translations });
-            })
-            .catch((error) => {
-                console.error("Error loading translations:", error);
-                this.setState({ translations: {} });
-            });
+        axios.get("/admin/locale/cart").then((res) => {
+            this.setState({ translations: res.data });
+        }).catch(() => this.setState({ translations: {} }));
     }
 
     loadCustomers() {
-        axios.get(`/admin/customers`, {
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            }
-        }).then((res) => {
-            const customers = res.data;
-            this.setState({ customers });
-        }).catch((error) => {
-            console.error("Error loading customers:", error);
-            this.setState({ customers: [] });
-        });
+        axios.get("/admin/customers").then((res) => {
+            this.setState({ customers: res.data || [] });
+        }).catch(() => this.setState({ customers: [] }));
     }
 
     loadProducts(search = "") {
-        const query = !!search ? `?search=${search}` : "";
-        axios.get(`/admin/products${query}`, {
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            }
-        }).then((res) => {
-            const products = res.data.data || [];
-            this.setState({ products });
-        }).catch((error) => {
-            console.error("Error loading products:", error);
-            this.setState({ products: [] });
-        });
-    }
-
-    handleOnChangeBarcode(event) {
-        const barcode = event.target.value;
-        this.setState({ barcode });
+        const query = search ? `?search=${encodeURIComponent(search)}` : "";
+        axios.get(`/admin/products${query}`).then((res) => {
+            this.setState({ products: res.data.data || [] });
+        }).catch(() => this.setState({ products: [] }));
     }
 
     loadCart() {
-        axios.get("/admin/cart", {
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            }
-        }).then((res) => {
-            const cart = Array.isArray(res.data) ? res.data : [];
-            this.setState({ cart });
-        }).catch((error) => {
-            console.error("Error loading cart:", error);
-            this.setState({ cart: [] });
-        });
+        this.setState({ loading: true });
+        axios.get("/admin/cart").then((res) => {
+            this.setState({ cart: Array.isArray(res.data) ? res.data : [], loading: false });
+        }).catch(() => this.setState({ cart: [], loading: false }));
     }
-    handleScanBarcode(event) {
-        event.preventDefault();
+
+    // ─── EVENT HANDLERS ───────────────────────────────────
+    handleOnChangeBarcode(e) {
+        this.setState({ barcode: e.target.value });
+    }
+
+    handleScanBarcode(e) {
+        e.preventDefault();
         const { barcode } = this.state;
-        if (!!barcode) {
-            axios
-                .post("/admin/cart", { barcode })
-                .then((res) => {
-                    this.loadCart();
-                    this.setState({ barcode: "" });
-                })
-                .catch((err) => {
-                    Swal.fire("Error!", err.response.data.message, "error");
-                });
-        }
-    }
-    handleChangeQty(product_id, qty) {
-        const cart = this.state.cart.map((c) => {
-            if (c.id === product_id) {
-                c.pivot.quantity = qty;
-            }
-            return c;
-        });
+        if (!barcode.trim()) return;
 
-        this.setState({ cart });
-        if (!qty) return;
-
-        axios
-            .post("/admin/cart/change-qty", { product_id, quantity: qty })
-            .then((res) => {})
+        axios.post("/admin/cart", { barcode })
+            .then(() => {
+                this.loadCart();
+                this.setState({ barcode: "" });
+            })
             .catch((err) => {
-                Swal.fire("Error!", err.response.data.message, "error");
+                Swal.fire("Lỗi!", err.response?.data?.message || "Không thể thêm sản phẩm", "error");
             });
     }
 
-    getTotal(cart) {
-        const total = cart.map((c) => c.pivot.quantity * c.price);
-        return sum(total).toFixed(2);
-    }
-    handleClickDelete(product_id) {
-        axios
-            .post("/admin/cart/delete", { product_id, _method: "DELETE" })
-            .then((res) => {
-                const cart = this.state.cart.filter((c) => c.id !== product_id);
-                this.setState({ cart });
+    handleChangeQty(product_id, qty) {
+        const newQty = parseInt(qty) || 0;
+        if (newQty < 0) return;
+
+        // Optimistic update
+        this.setState((prev) => ({
+            cart: prev.cart.map((item) =>
+                item.id === product_id ? { ...item, pivot: { ...item.pivot, quantity: newQty } } : item
+            ),
+        }));
+
+        if (newQty === 0) return;
+
+        axios.post("/admin/cart/change-qty", { product_id, quantity: newQty })
+            .catch((err) => {
+                Swal.fire("Lỗi!", err.response?.data?.message || "Cập nhật số lượng thất bại", "error");
+                this.loadCart(); // rollback
             });
     }
+
+    handleClickDelete(product_id) {
+        axios.post("/admin/cart/delete", { product_id, _method: "DELETE" })
+            .then(() => this.loadCart())
+            .catch((err) => Swal.fire("Lỗi!", err.response?.data?.message, "error"));
+    }
+
     handleEmptyCart() {
-        axios.post("/admin/cart/empty", { _method: "DELETE" }).then((res) => {
-            this.setState({ cart: [] });
+        Swal.fire({
+            title: "Xóa toàn bộ giỏ hàng?",
+            text: "Hành động này không thể hoàn tác!",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#dc3545",
+            cancelButtonColor: "#6c757d",
+            confirmButtonText: "Xóa hết",
+            cancelButtonText: "Hủy",
+        }).then((result) => {
+            if (result.isConfirmed) {
+                axios.post("/admin/cart/empty", { _method: "DELETE" })
+                    .then(() => this.setState({ cart: [] }))
+                    .catch(() => Swal.fire("Lỗi!", "Không thể xóa giỏ hàng", "error"));
+            }
         });
     }
-    handleChangeSearch(event) {
-        const search = event.target.value;
-        this.setState({ search });
-    }
-    handleSeach(event) {
-        if (event.keyCode === 13) {
-            this.loadProducts(event.target.value);
+
+    handleChangeSearch(e) {
+        const value = e.target.value;
+        this.setState({ search: value });
+        if (e.key === "Enter") {
+            this.loadProducts(value);
         }
     }
 
@@ -208,185 +183,275 @@ class Cart extends Component {
         }
     }
 
-    setCustomerId(event) {
-        this.setState({ customer_id: event.target.value });
+    handleSeach(e) {
+        if (e.key === "Enter") {
+            this.loadProducts(e.target.value);
+        }
     }
+
+    setCustomerId(e) {
+        this.setState({ customer_id: e.target.value });
+    }
+
+    getTotal(cart) {
+        return sum(cart.map((c) => c.pivot.quantity * c.price));
+    }
+
     handleClickSubmit() {
+        const total = this.getTotal(this.state.cart);
         Swal.fire({
-            title: this.state.translations["received_amount"],
-            input: "text",
-            inputValue: this.getTotal(this.state.cart),
-            cancelButtonText: this.state.translations["cancel_pay"],
+            title: this.state.translations["received_amount"] || "Số tiền nhận",
+            input: "number",
+            inputValue: total,
+            inputAttributes: { min: total, step: "0.01" },
             showCancelButton: true,
-            confirmButtonText: this.state.translations["confirm_pay"],
+            confirmButtonText: this.state.translations["confirm_pay"] || "Xác nhận thanh toán",
+            cancelButtonText: this.state.translations["cancel_pay"] || "Hủy",
             showLoaderOnConfirm: true,
             preConfirm: (amount) => {
+                if (parseFloat(amount) < parseFloat(total)) {
+                    Swal.showValidationMessage("Số tiền nhận phải lớn hơn hoặc bằng tổng tiền!");
+                    return false;
+                }
                 return axios
                     .post("/admin/orders", {
                         customer_id: this.state.customer_id,
                         amount,
                     })
-                    .then((res) => {
-                        this.loadCart();
-                        return res.data;
-                    })
+                    .then((res) => res.data)
                     .catch((err) => {
-                        Swal.showValidationMessage(err.response.data.message);
+                        Swal.showValidationMessage(err.response?.data?.message || "Lỗi khi tạo đơn hàng");
                     });
             },
-            allowOutsideClick: () => !Swal.isLoading(),
         }).then((result) => {
             if (result.value) {
-                //
+                Swal.fire("Thành công!", "Đã tạo đơn hàng", "success");
+                this.loadCart();
             }
         });
     }
+
+    // ─── RENDER ───────────────────────────────────────────
     render() {
-        const { cart = [], products = [], customers = [], barcode = "", translations = {} } = this.state;
+        const { cart, products, customers, barcode, search, translations, loading } = this.state;
+        const total = this.getTotal(cart);
+
         return (
-            <div className="row">
-                <div className="col-md-6 col-lg-4">
-                    <div className="row mb-2">
-                        <div className="col">
-                            <form onSubmit={this.handleScanBarcode}>
-                                <input
-                                    type="text"
-                                    className="form-control"
-                                    placeholder={translations["scan_barcode"] || "Scan Barcode"}
-                                    value={barcode}
-                                    onChange={this.handleOnChangeBarcode}
-                                />
-                            </form>
-                        </div>
-                        <div className="col">
-                            <select
-                                className="form-control"
-                                onChange={this.setCustomerId}
-                            >
-                                <option value="">
-                                    {translations["general_customer"] || "General Customer"}
-                                </option>
-                                {customers.map((cus) => (
-                                    <option
-                                        key={cus.id}
-                                        value={cus.id}
-                                    >{`${cus.first_name} ${cus.last_name}`}</option>
-                                ))}
-                            </select>
-                        </div>
-                    </div>
-                    <div className="user-cart">
-                        <div className="card">
-                            <table className="table table-striped">
-                                <thead>
-                                <tr>
-                                    <th>{translations["product_name"] || "Product"}</th>
-                                    <th>{translations["quantity"] || "Qty"}</th>
-                                    <th className="text-right">
-                                        {translations["price"] || "Price"}
-                                    </th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                {cart.map((c) => (
-                                    <tr key={c.id}>
-                                        <td>{c.name}</td>
-                                        <td>
+            <div className="container-fluid py-3">
+                <div className="row g-3">
+                    {/* LEFT - CART */}
+                    <div className="col-lg-5 col-xl-5">
+                        <div className="card shadow-sm border-0 h-100">
+                            <div className="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                                <h5 className="mb-0">Giỏ hàng</h5>
+                                <small>{cart.length} sản phẩm</small>
+                            </div>
+
+                            <div className="card-body p-3 d-flex flex-column">
+                                {/* Barcode + Customer */}
+                                <div className="row g-2 mb-3">
+                                    <div className="col-7">
+                                        <form onSubmit={this.handleScanBarcode}>
                                             <input
                                                 type="text"
-                                                className="form-control form-control-sm qty"
-                                                value={c.pivot.quantity}
-                                                onChange={(event) =>
-                                                    this.handleChangeQty(
-                                                        c.id,
-                                                        event.target.value
-                                                    )
-                                                }
+                                                className="form-control form-control-lg"
+                                                placeholder={translations["scan_barcode"] || "Quét mã vạch..."}
+                                                value={barcode}
+                                                onChange={this.handleOnChangeBarcode}
+                                                autoFocus
                                             />
-                                            <button
-                                                className="btn btn-danger btn-sm"
-                                                onClick={() =>
-                                                    this.handleClickDelete(
-                                                        c.id
-                                                    )
-                                                }
-                                            >
-                                                <i className="fas fa-trash"></i>
-                                            </button>
-                                        </td>
-                                        <td className="text-right">
-                                            {window.APP.currency_symbol}{" "}
-                                            {(
-                                                c.price * c.pivot.quantity
-                                            ).toFixed(2)}
-                                        </td>
-                                    </tr>
-                                ))}
-                                </tbody>
-                            </table>
+                                        </form>
+                                    </div>
+                                    <div className="col-5">
+                                        <select
+                                            className="form-select form-select-xl"
+                                            onChange={this.setCustomerId}
+                                            value={this.state.customer_id}
+                                        >
+                                            <option value="">{translations["general_customer"] || "Khách lẻ"}</option>
+                                            {customers.map((cus) => (
+                                                <option key={cus.id} value={cus.id}>
+                                                    {cus.first_name} {cus.last_name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                {/* Cart Items */}
+                                <div className="flex-grow-1 overflow-auto" style={{ maxHeight: "55vh" }}>
+                                    {loading ? (
+                                        <div className="text-center py-5">
+                                            <div className="spinner-border text-primary" role="status" />
+                                        </div>
+                                    ) : cart.length === 0 ? (
+                                        <div className="text-center text-muted py-5">
+                                            <i className="fas fa-shopping-cart fa-3x mb-3"></i>
+                                            <p>Giỏ hàng trống</p>
+                                        </div>
+                                    ) : (
+                                        <div className="list-group list-group-flush">
+                                            {cart.map((item) => (
+                                                <div
+                                                    key={item.id}
+                                                    className="list-group-item list-group-item-action px-0 py-3"
+                                                >
+                                                    <div className="d-flex justify-content-between align-items-center">
+                                                        <div className="flex-grow-1">
+                                                            <h6 className="mb-1">{item.name}</h6>
+                                                            <div className="text-muted small">
+                                                                {window.APP.currency_symbol} {item.price}
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="d-flex align-items-center gap-2">
+                                                            <div className="input-group input-group-sm" style={{ width: "120px" }}>
+                                                                <button
+                                                                    className="btn btn-outline-secondary"
+                                                                    onClick={() => this.handleChangeQty(item.id, item.pivot.quantity - 1)}
+                                                                >
+                                                                    -
+                                                                </button>
+                                                                <input
+                                                                    type="text"
+                                                                    className="form-control text-center"
+                                                                    value={item.pivot.quantity}
+                                                                    onChange={(e) => this.handleChangeQty(item.id, e.target.value)}
+                                                                />
+                                                                <button
+                                                                    className="btn btn-outline-secondary"
+                                                                    onClick={() => this.handleChangeQty(item.id, item.pivot.quantity + 1)}
+                                                                >
+                                                                    +
+                                                                </button>
+                                                            </div>
+
+                                                            <button
+                                                                className="btn btn-sm btn-danger"
+                                                                onClick={() => this.handleClickDelete(item.id)}
+                                                            >
+                                                                <i className="fas fa-trash"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="text-end mt-1 fw-bold">
+                                                        {window.APP.currency_symbol} {(item.price * item.pivot.quantity)}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Total & Actions */}
+                                <div className="mt-3 pt-3 border-top">
+                                    <div className="d-flex justify-content-between align-items-center mb-3">
+                                        <h5 className="mb-0">Tổng tiền:</h5>
+                                        <h4 className="mb-0 text-primary fw-bold">
+                                            {window.APP.currency_symbol} {total}
+                                        </h4>
+                                    </div>
+
+                                    <div className="d-grid gap-2 d-flex justify-content-between align-items-center">
+                                        <button
+                                            className="btn btn-danger btn-lg"
+                                            onClick={this.handleEmptyCart}
+                                            disabled={!cart.length}
+                                        >
+                                            {translations["cancel"] || "Hủy đơn"}
+                                        </button>
+                                        <button
+                                            className="btn btn-success btn-lg"
+                                            onClick={this.handleClickSubmit}
+                                            disabled={!cart.length}
+                                        >
+                                            <i className="fas fa-check me-2"></i>
+                                            {translations["checkout"] || "Thanh toán"}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <div className="row">
-                        <div className="col">{translations["total"] || "Total"}:</div>
-                        <div className="col text-right">
-                            {window.APP.currency_symbol} {this.getTotal(cart)}
-                        </div>
-                    </div>
-                    <div className="row">
-                        <div className="col">
-                            <button
-                                type="button"
-                                className="btn btn-danger btn-block"
-                                onClick={this.handleEmptyCart}
-                                disabled={!cart.length}
-                            >
-                                {translations["cancel"] || "Cancel"}
-                            </button>
-                        </div>
-                        <div className="col">
-                            <button
-                                type="button"
-                                className="btn btn-primary btn-block"
-                                disabled={!cart.length}
-                                onClick={this.handleClickSubmit}
-                            >
-                                {translations["checkout"] || "Checkout"}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                <div className="col-md-6 col-lg-8">
-                    <div className="mb-2">
-                        <input
-                            type="text"
-                            className="form-control"
-                            placeholder={(translations["search_product"] || "Search Product") + "..."}
-                            onChange={this.handleChangeSearch}
-                            onKeyDown={this.handleSeach}
-                        />
-                    </div>
-                    <div className="order-product">
-                        {products.map((p) => (
-                            <div
-                                onClick={() => this.addProductToCart(p.barcode)}
-                                key={p.id}
-                                className="item"
-                            >
-                                <img src={p.image_url} alt="" />
-                                <h5
-                                    style={
-                                        window.APP.warning_quantity > p.quantity
-                                            ? { color: "red" }
-                                            : {}
-                                    }
-                                >
-                                    {p.name}({p.quantity})
-                                </h5>
+                    {/* RIGHT - PRODUCTS */}
+                    <div className="col-lg-7 col-xl-7">
+                        <div className="card shadow-sm border-0">
+                            <div className="card-header bg-light">
+                                <input
+                                    type="text"
+                                    className="form-control form-control-lg"
+                                    placeholder={translations["search_product"] || "Tìm sản phẩm... (Enter để tìm)"}
+                                    value={search}
+                                    onChange={this.handleChangeSearch}
+                                    onKeyDown={this.handleSeach}
+                                />
                             </div>
-                        ))}
+
+                            <div className="card-body p-3">
+                                <div className="row g-3 product-grid">
+                                    {products.length === 0 ? (
+                                        <div className="col-12 text-center py-5 text-muted">
+                                            Không tìm thấy sản phẩm
+                                        </div>
+                                    ) : (
+                                        products.map((p) => (
+                                            <div className="col-6 col-md-4 col-lg-3" key={p.id}>
+                                                <div
+                                                    className="card product-card h-100 shadow-sm border-0 hover-lift"
+                                                    onClick={() => this.addProductToCart(p.barcode)}
+                                                    role="button"
+                                                >
+                                                    <img
+                                                        src={p.image_url || "https://via.placeholder.com/300x300?text=No+Image"}
+                                                        className="card-img-top"
+                                                        alt={p.name}
+                                                        style={{ height: "160px", objectFit: "cover" }}
+                                                    />
+                                                    <div className="flex-column card-body d-block p-3">
+                                                        <h6 className="text-bold mb-2">
+                                                            {p.name}
+                                                        </h6>
+                                                        <div className="text-muted mb-1 small">
+                                                            SL: <strong>{p.quantity}</strong>
+                                                        </div>
+                                                        {window.APP.warning_quantity > p.quantity && (
+                                                            <span className="badge bg-danger">Sắp hết hàng</span>
+                                                        )}
+                                                        <div className="fw-bold text-primary mt-2">
+                                                            {window.APP.currency_symbol} {p.price}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
+
+                {/* CSS cần thêm vào file css hoặc style tag */}
+                <style>{`
+          .product-card {
+            transition: all 0.2s;
+            cursor: pointer;
+          }
+          .product-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.12) !important;
+          }
+          .hover-lift:hover {
+            transform: translateY(-3px);
+          }
+          .product-grid {
+            max-height: 75vh;
+            overflow-y: auto;
+            padding-right: 8px;
+          }
+        `}</style>
             </div>
         );
     }
@@ -396,6 +461,5 @@ export default Cart;
 
 const root = document.getElementById("cart");
 if (root) {
-    const rootInstance = createRoot(root);
-    rootInstance.render(<Cart />);
+    createRoot(root).render(<Cart />);
 }

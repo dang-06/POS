@@ -13,7 +13,7 @@ class SettingsSeeder extends Seeder
     public function run(): void
     {
         $data = [
-            ['key' => 'app_name', 'value' => 'Laravel-POS'],
+            ['key' => 'app_name', 'value' => 'POS'],
             ['key' => 'currency_symbol', 'value' => '$'],
         ];
 

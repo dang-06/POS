@@ -25,9 +25,9 @@
     </script>
 </head>
 
-<body class="hold-transition sidebar-mini">
+<body class="hold-transition" style="height: 100vh !important;">
     <!-- Site wrapper -->
-    <div class="wrapper">
+    <div style="height: 100vh !important; overflow: auto;">
 
         @include('layouts.partials.navbar')
         @include('layouts.partials.sidebar')

@@ -181,7 +181,7 @@
 
 <style>
     .main-sidebar {
-        height: 100vh !important;
+        max-height: 100vh !important;
         overflow: auto !important;
         position: fixed;
         top: 0;

@@ -27,7 +27,7 @@
     </div>
 
     <!-- Sidebar -->
-    <div class="sidebar">
+    <div>
         <!-- Sidebar Menu -->
         <nav class="mt-2">
             <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
@@ -180,6 +180,14 @@
 </aside>
 
 <style>
+    .main-sidebar {
+        max-height: 100vh !important;
+        overflow: auto !important;
+        position: fixed;
+        top: 0;
+        left: 0;
+    }
+
     .brand-container {
         padding: 15px;
         background: linear-gradient(135deg, #343a40 0%, #212529 100%);

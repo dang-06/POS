@@ -96,7 +96,7 @@ class OrderController extends Controller
 
         return redirect()->route('orders.index')
             ->with('success', __('order.partial_payment_success', [
-                'amount' => config('settings.currency_symbol') . number_format($request->amount, 2)
+                'amount' => config('settings.currency_symbol') . number_format($request->amount)
             ]));
     }
 

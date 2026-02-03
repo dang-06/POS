@@ -51,6 +51,6 @@ class Payment extends Model
 
     public function formattedAmount(): string
     {
-        return number_format((float) $this->amount, 2);
+        return number_format((float) $this->amount);
     }
 }

@@ -50,8 +50,8 @@
                     <tr>
                         <td>{{$order->id}}</td>
                         <td>{{$order->getCustomerName()}}</td>
-                        <td>{{ config('settings.currency_symbol') }} {{number_format($orderTotal, 2)}}</td>
-                        <td>{{ config('settings.currency_symbol') }} {{number_format($orderReceived, 2)}}</td>
+                        <td>{{ config('settings.currency_symbol') }} {{number_format($orderTotal)}}</td>
+                        <td>{{ config('settings.currency_symbol') }} {{number_format($orderReceived)}}</td>
                         <td>
                             @if($orderReceived == 0)
                                 <span class="badge badge-danger">{{ __('order.Not_Paid') }}</span>
@@ -61,7 +61,7 @@
                                 <span class="badge badge-success">{{ __('order.Paid') }}</span>
                             @endif
                         </td>
-                        <td>{{config('settings.currency_symbol')}} {{number_format($orderRemaining, 2)}}</td>
+                        <td>{{config('settings.currency_symbol')}} {{number_format($orderRemaining)}}</td>
                         <td>{{$order->created_at}}</td>
                         <td>
                             <button
@@ -94,8 +94,8 @@
                 <tr>
                     <th></th>
                     <th></th>
-                    <th>{{ config('settings.currency_symbol') }} {{ number_format($total, 2) }}</th>
-                    <th>{{ config('settings.currency_symbol') }} {{ number_format($receivedAmount, 2) }}</th>
+                    <th>{{ config('settings.currency_symbol') }} {{ number_format($total) }}</th>
+                    <th>{{ config('settings.currency_symbol') }} {{ number_format($receivedAmount) }}</th>
                     <th></th>
                     <th></th>
                     <th></th>

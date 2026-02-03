@@ -151,9 +151,6 @@
                     </a>
                 </li>
 
-                <!-- Divider -->
-                <li class="nav-divider"></li>
-
                 <!-- Logout -->
                 <li class="nav-item logout-item">
                     <a href="#" class="nav-link logout-link"
@@ -183,9 +180,12 @@
 </aside>
 
 <style>
-    ..main-sidebar {
-        height: 100%;
-        over-flow: auto;
+    .main-sidebar {
+        height: 100vh !important;
+        overflow: auto !important;
+        position: fixed;
+        top: 0;
+        left: 0;
     }
 
     .brand-container {

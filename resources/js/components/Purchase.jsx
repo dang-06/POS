@@ -343,7 +343,7 @@ class Purchase extends Component {
                                 <input
                                     type="text"
                                     className="form-control form-control-lg"
-                                    placeholder={(translations["search_product"] || "Search Product") + "..."}
+                                    placeholder="Tìm kiếm sản phẩm..."
                                     value={search}
                                     onChange={this.handleChangeSearch}
                                     onKeyDown={this.handleSearch}
@@ -358,9 +358,9 @@ class Purchase extends Component {
                                     >
                                         <img src={p.image_url} alt={p.name} />
                                         <h5>{p.name}</h5>
-                                        <small className="text-muted">Stock: {p.quantity}</small>
+                                        <small className="text-muted">Tồn kho: {p.quantity}</small>
                                         {p.purchase_price && (
-                                            <><br /><small className="text-success font-weight-bold">Cost: {window.APP.currency_symbol}{p.purchase_price}</small></>
+                                            <><br /><small className="text-success font-weight-bold">Giá nhập: {window.APP.currency_symbol}{p.purchase_price}</small></>
                                         )}
                                     </div>
                                 ))}
@@ -376,18 +376,18 @@ class Purchase extends Component {
                         <div className="card card-primary card-outline">
                             <div className="card-header">
                                 <h3 className="card-title">
-                                    <i className="fas fa-truck mr-2"></i>Purchase Information
+                                    <i className="fas fa-truck mr-2"></i>Thông tin mua hàng
                                 </h3>
                             </div>
                             <div className="card-body">
                                 <div className="form-group">
-                                    <label>Supplier <span className="text-danger">*</span></label>
+                                    <label>Nhà cung cấp <span className="text-danger">*</span></label>
                                     <select
                                         className="form-control"
                                         value={supplier_id}
                                         onChange={this.setSupplierId}
                                     >
-                                        <option value="">Select Supplier</option>
+                                        <option value="">Chọn nhà cung cấp</option>
                                         {suppliersList.map((sup) => (
                                             <option
                                                 key={sup.id}
@@ -397,7 +397,7 @@ class Purchase extends Component {
                                     </select>
                                 </div>
                                 <div className="form-group">
-                                    <label>Purchase Date <span className="text-danger">*</span></label>
+                                    <label>Ngày mua <span className="text-danger">*</span></label>
                                     <input
                                         type="date"
                                         className="form-control"
@@ -412,71 +412,71 @@ class Purchase extends Component {
                         <div className="card card-secondary card-outline">
                             <div className="card-header">
                                 <h3 className="card-title">
-                                    <i className="fas fa-shopping-basket mr-2"></i>Items
+                                    <i className="fas fa-shopping-basket mr-2"></i>Sản phẩm
                                 </h3>
                             </div>
                             <div className="card-body p-0 purchase-cart">
                                 <table className="table table-sm table-hover mb-0">
                                     <thead>
-                                    <tr>
-                                        <th>Product</th>
-                                        <th width="70">Qty</th>
-                                        <th width="90">Price</th>
-                                        <th width="40"></th>
-                                    </tr>
+                                        <tr>
+                                            <th>Sản phẩm</th>
+                                            <th width="70">SL</th>
+                                            <th width="90">Giá</th>
+                                            <th width="40"></th>
+                                        </tr>
                                     </thead>
                                     <tbody>
-                                    {cart.map((c) => (
-                                        <tr key={c.id}>
-                                            <td>
-                                                <small className="font-weight-bold">{c.name}</small>
-                                            </td>
-                                            <td>
-                                                <input
-                                                    type="number"
-                                                    className="form-control form-control-sm"
-                                                    value={c.pivot.quantity}
-                                                    onChange={(event) =>
-                                                        this.handleChangeQty(
-                                                            c.id,
-                                                            event.target.value
-                                                        )
-                                                    }
-                                                    min="1"
-                                                />
-                                            </td>
-                                            <td>
-                                                <input
-                                                    type="number"
-                                                    className="form-control form-control-sm"
-                                                    value={c.pivot.purchase_price || 0}
-                                                    onChange={(event) =>
-                                                        this.handleChangePrice(
-                                                            c.id,
-                                                            event.target.value
-                                                        )
-                                                    }
-                                                    min="0"
-                                                    step="0.01"
-                                                />
-                                            </td>
-                                            <td>
-                                                <button
-                                                    className="btn btn-danger btn-xs"
-                                                    onClick={() => this.handleClickDelete(c.id)}
-                                                    title="Remove"
-                                                >
-                                                    <i className="fas fa-times"></i>
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    ))}
+                                        {cart.map((c) => (
+                                            <tr key={c.id}>
+                                                <td>
+                                                    <small className="font-weight-bold">{c.name}</small>
+                                                </td>
+                                                <td>
+                                                    <input
+                                                        type="number"
+                                                        className="form-control form-control-sm"
+                                                        value={c.pivot.quantity}
+                                                        onChange={(event) =>
+                                                            this.handleChangeQty(
+                                                                c.id,
+                                                                event.target.value
+                                                            )
+                                                        }
+                                                        min="1"
+                                                    />
+                                                </td>
+                                                <td>
+                                                    <input
+                                                        type="number"
+                                                        className="form-control form-control-sm"
+                                                        value={c.pivot.purchase_price || 0}
+                                                        onChange={(event) =>
+                                                            this.handleChangePrice(
+                                                                c.id,
+                                                                event.target.value
+                                                            )
+                                                        }
+                                                        min="0"
+                                                        step="0.01"
+                                                    />
+                                                </td>
+                                                <td>
+                                                    <button
+                                                        className="btn btn-danger btn-xs"
+                                                        onClick={() => this.handleClickDelete(c.id)}
+                                                        title="Xóa"
+                                                    >
+                                                        <i className="fas fa-times"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
                                     </tbody>
                                 </table>
                                 {cart.length === 0 && (
                                     <div className="text-center text-muted py-4">
                                         <i className="fas fa-inbox fa-3x mb-2"></i>
-                                        <p>No items added yet</p>
+                                        <p>Chưa có sản phẩm nào</p>
                                     </div>
                                 )}
                             </div>
@@ -487,10 +487,10 @@ class Purchase extends Component {
                             <div className="card">
                                 <div className="card-body">
                                     <div className="form-group mb-0">
-                                        <label className="small">Notes (optional)</label>
+                                        <label className="small">Ghi chú (tuỳ chọn)</label>
                                         <textarea
                                             className="form-control form-control-sm"
-                                            placeholder="Add notes..."
+                                            placeholder="Thêm ghi chú..."
                                             rows="2"
                                             value={notes}
                                             onChange={this.handleNotesChange}
@@ -505,7 +505,7 @@ class Purchase extends Component {
                             <div className="card">
                                 <div className="card-body">
                                     <label className="small font-weight-bold mb-2">
-                                        <i className="fas fa-flag mr-1"></i>Status
+                                        <i className="fas fa-flag mr-1"></i>Trạng thái
                                     </label>
                                     <div className="status-selector">
                                         <div className="form-check">
@@ -519,7 +519,7 @@ class Purchase extends Component {
                                                 onChange={this.handleStatusChange}
                                             />
                                             <label className="form-check-label" htmlFor="status-pending">
-                                                <i className="fas fa-clock text-warning mr-1"></i>Pending
+                                                <i className="fas fa-clock text-warning mr-1"></i>Đang chờ
                                             </label>
                                         </div>
                                         <div className="form-check">
@@ -533,7 +533,7 @@ class Purchase extends Component {
                                                 onChange={this.handleStatusChange}
                                             />
                                             <label className="form-check-label" htmlFor="status-completed">
-                                                <i className="fas fa-check-circle text-success mr-1"></i>Completed
+                                                <i className="fas fa-check-circle text-success mr-1"></i>Đã hoàn thành
                                             </label>
                                         </div>
                                         <div className="form-check">
@@ -547,7 +547,7 @@ class Purchase extends Component {
                                                 onChange={this.handleStatusChange}
                                             />
                                             <label className="form-check-label" htmlFor="status-cancelled">
-                                                <i className="fas fa-times-circle text-danger mr-1"></i>Cancelled
+                                                <i className="fas fa-times-circle text-danger mr-1"></i>Đã hủy
                                             </label>
                                         </div>
                                     </div>
@@ -559,7 +559,7 @@ class Purchase extends Component {
                         {cart.length > 0 && (
                             <>
                                 <div className="purchase-total text-center">
-                                    <div className="small mb-1">Total Amount</div>
+                                    <div className="small mb-1">Tổng tiền</div>
                                     <div className="amount">{window.APP.currency_symbol} {this.getTotal(cart)}</div>
                                 </div>
 
@@ -571,7 +571,7 @@ class Purchase extends Component {
                                                 className="btn btn-danger btn-block"
                                                 onClick={this.handleEmptyCart}
                                             >
-                                                <i className="fas fa-times mr-1"></i>Cancel
+                                                <i className="fas fa-times mr-1"></i>Hủy
                                             </button>
                                         </div>
                                         <div className="col-6">
@@ -581,7 +581,7 @@ class Purchase extends Component {
                                                 disabled={!supplier_id}
                                                 onClick={this.handleClickSubmit}
                                             >
-                                                <i className="fas fa-save mr-1"></i>Save
+                                                <i className="fas fa-save mr-1"></i>Lưu
                                             </button>
                                         </div>
                                     </div>
